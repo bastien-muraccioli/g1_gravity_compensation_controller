@@ -20,39 +20,36 @@ VerboseStateFactory: false
 robots:
   ground:
     module: env/ground
-# General constraints, always on
-constraints:
-- type: contact
-- type: dynamics
-  damper: [0.1, 0.01, 0.5]
-- type: compoundJoint
+
 # Collision constraint
 collisions:
 - type: collision
   useMinimal: true
-# Initial set of contacts
-contacts:
-- r1: jvrc1
-  r2: ground
-  r1Surface: LeftFoot
-  r2Surface: AllGround
-- r1: jvrc1
-  r2: ground
-  r1Surface: RightFoot
-  r2Surface: AllGround
 
-# Some options for a specific robot
-jvrc1:
-  posture:
-    stiffness: 1
-    weight: 10
-  ff:
-    stiffness: 2
-    weight: 100
+observers:
+    - type: Encoder
+      velocity: encoderVelocities
+    - type: Tilt
+      required: true
+      update: true
+      anchorFrameFunction: anchorFrameFunction
+      filterGains:
+        initAlpha: 2
+        initBeta: 2
+        initGamma: 1
+        finalAlpha: 2
+        finalBeta: 2
+        finalGamma: 1
+    - type: ExternalForcesObserver
+      residual_gain: 10.0
+      torque_source_type: CommandedTorque
+      estimation_method: MomentumObserver
+      use_forces_from_ft_sensors: false
+
 # Implement some additional text states
 states: {}
 # Transitions map
 transitions:
-- [NewFSMController_Initial, OK, NewFSMController_Initial, Strict]
+- [G1GravityCompensationController_Initial, OK, G1GravityCompensationController_Initial, Strict]
 # Initial state
-init: NewFSMController_Initial
+init: G1GravityCompensationController_Initial
