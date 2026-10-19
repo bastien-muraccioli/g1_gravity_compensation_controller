@@ -13,10 +13,13 @@ G1GravityCompensationController::G1GravityCompensationController(mc_rbdyn::Robot
   // Initialize Task
   torqueTask = std::make_shared<mc_tasks::TorqueTask>(solver(), robot().robotIndex());
   solver().addTask(torqueTask);
-  solver().removeTask(getPostureTask());
+  solver().removeTask(getPostureTask(robot().name()));
 
   datastore().make_call("anchorFrameFunction", 
     [this](const mc_rbdyn::Robot & real_robot) {return createContactAnchor(real_robot);});
+  
+  datastore().make<std::string>("ControlMode", "Torque");
+
 
   addGui();
 
@@ -48,11 +51,11 @@ void G1GravityCompensationController::addGui()
 
 std::pair<sva::PTransformd, Eigen::Vector3d> G1GravityCompensationController::createContactAnchor(const mc_rbdyn::Robot & anchorRobot)
 {
-  sva::PTransformd X_foot_r = anchorRobot.bodyPosW("right_ankle_link");
-  sva::PTransformd X_foot_l = anchorRobot.bodyPosW("left_ankle_link");
+  sva::PTransformd X_foot_r = anchorRobot.bodyPosW("right_ankle_pitch_link");
+  sva::PTransformd X_foot_l = anchorRobot.bodyPosW("left_ankle_pitch_link");
 
-  sva::MotionVecd v_foot_r = anchorRobot.bodyVelW("right_ankle_link");
-  sva::MotionVecd v_foot_l = anchorRobot.bodyVelW("left_ankle_link");
+  sva::MotionVecd v_foot_r = anchorRobot.bodyVelW("right_ankle_pitch_link");
+  sva::MotionVecd v_foot_l = anchorRobot.bodyVelW("left_ankle_pitch_link");
 
   int right_knee_index = int(robot().jointIndexByName("right_knee_joint")) + 5;
   int left_knee_index = int(robot().jointIndexByName("left_knee_joint")) + 5;

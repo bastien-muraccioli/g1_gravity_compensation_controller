@@ -26,7 +26,12 @@ collisions:
 - type: collision
   useMinimal: true
 
-observers:
+ObserverPipelines:
+  name: MainPipeline
+  gui: true
+  log: true
+  
+  observers:
     - type: Encoder
       velocity: encoderVelocities
     - type: Tilt
