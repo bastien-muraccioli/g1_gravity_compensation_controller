@@ -21,6 +21,9 @@ robots:
   ground:
     module: env/ground
 
+# Joint damping added to the torque task target (tau = -TorqueTaskDamping * qdot), in Nm.s/rad. 0 disables it
+TorqueTaskDamping: 0.5
+
 # Collision constraint
 collisions:
 - type: collision
@@ -50,6 +53,7 @@ ObserverPipelines:
       torque_source_type: CommandedTorque
       estimation_method: MomentumObserver
       use_forces_from_ft_sensors: false
+      is_active: false
 
 # Implement some additional text states
 states: {}

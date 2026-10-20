@@ -3,6 +3,9 @@
 #include <mc_control/fsm/Controller.h>
 #include <mc_tasks/TorqueTask.h>
 
+#include <algorithm>
+#include <map>
+
 #include "api.h"
 
 struct G1GravityCompensationController_DLLAPI G1GravityCompensationController : public mc_control::fsm::Controller
@@ -17,7 +20,11 @@ struct G1GravityCompensationController_DLLAPI G1GravityCompensationController : 
 
 private:
   void addGui();
+  void updateDampingTarget();
   mc_rtc::Configuration config_;
+  // Joint damping added through the torque task target: tau_d = -damping_ * qdot [Nm.s/rad]
+  double damping_ = 0.5;
+  std::map<std::string, std::vector<double>> dampingTarget_;
   std::pair<sva::PTransformd, Eigen::Vector3d> createContactAnchor(const mc_rbdyn::Robot & anchorRobot);
   sva::PTransformd contactAnchorTf_;
   // Constraint configuration

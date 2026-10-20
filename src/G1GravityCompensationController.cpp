@@ -12,8 +12,17 @@ G1GravityCompensationController::G1GravityCompensationController(mc_rbdyn::Robot
 
   // Initialize Task
   torqueTask = std::make_shared<mc_tasks::TorqueTask>(solver(), robot().robotIndex());
+  // torqueTask->setCompensateGravity(true);
   solver().addTask(torqueTask);
   solver().removeTask(getPostureTask(robot().name()));
+
+  // Joint damping on the torque task (0 disables it)
+  damping_ = config("TorqueTaskDamping", 0.0);
+  for(const auto & j : robot().mb().joints())
+  {
+    if(j.dof() == 1 && !j.isMimic()) { dampingTarget_[j.name()] = {0.0}; }
+  }
+  logger().addLogEntry("TorqueTask_damping", [this]() { return damping_; });
 
   datastore().make_call("anchorFrameFunction", 
     [this](const mc_rbdyn::Robot & real_robot) {return createContactAnchor(real_robot);});
@@ -28,6 +37,8 @@ G1GravityCompensationController::G1GravityCompensationController(mc_rbdyn::Robot
 
 bool G1GravityCompensationController::run()
 {
+  updateDampingTarget();
+  // return mc_control::fsm::Controller::run();
   return mc_control::fsm::Controller::run(mc_solver::FeedbackType::ClosedLoopIntegrateReal);
 }
 
@@ -36,8 +47,31 @@ void G1GravityCompensationController::reset(const mc_control::ControllerResetDat
   mc_control::fsm::Controller::reset(reset_data);
 }
 
+void G1GravityCompensationController::updateDampingTarget()
+{
+  // Prefer the raw encoder velocities (fresh this cycle, ordered as refJointOrder),
+  // fall back to the estimated real robot velocities otherwise.
+  const auto & refOrder = robot().refJointOrder();
+  const auto & encVel = robot().encoderVelocities();
+  const bool useEncoders = encVel.size() == refOrder.size();
+  const auto & real = realRobot();
+
+  for(size_t i = 0; i < refOrder.size(); ++i)
+  {
+    auto it = dampingTarget_.find(refOrder[i]);
+    if(it == dampingTarget_.end()) { continue; }
+    double qdot = useEncoders ? encVel[i] : real.mbc().alpha[real.jointIndexByName(refOrder[i])][0];
+    it->second[0] = -damping_ * qdot;
+  }
+  torqueTask->target(dampingTarget_);
+}
+
 void G1GravityCompensationController::addGui()
 {
+  gui()->addElement({"Controller", "Torque Task"},
+    mc_rtc::gui::NumberInput("Damping [Nm.s/rad]", [this]() {return damping_;},
+                             [this](double d) {damping_ = std::max(0.0, d);}));
+
   gui()->addElement({"Controller", "CBF"}, 
     mc_rtc::gui::NumberInput("Vel Percent", [this]() {return velPercent_;}, [this](double v) {velPercent_ = v;}),
     mc_rtc::gui::NumberInput("DS Percent", [this]() {return dsPercent_;}, [this](double v) {dsPercent_ = v;}),
