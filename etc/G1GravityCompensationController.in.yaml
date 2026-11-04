@@ -49,8 +49,8 @@ ObserverPipelines:
         finalBeta: 2
         finalGamma: 1
     - type: ExternalForcesObserver
-      residual_gain: 10.0
-      torque_source_type: CommandedTorque
+      residual_gain: 30.0
+      torque_source_type: MotorTorqueMeasurement #CommandedTorque #MotorTorqueMeasurement
       estimation_method: MomentumObserver
       use_forces_from_ft_sensors: false
       is_active: false

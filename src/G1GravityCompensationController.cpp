@@ -12,7 +12,7 @@ G1GravityCompensationController::G1GravityCompensationController(mc_rbdyn::Robot
 
   // Initialize Task
   torqueTask = std::make_shared<mc_tasks::TorqueTask>(solver(), robot().robotIndex());
-  // torqueTask->setCompensateGravity(true);
+  torqueTask->setCompensateGravity(true);
   solver().addTask(torqueTask);
   solver().removeTask(getPostureTask(robot().name()));
 
